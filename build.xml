@@ -13,6 +13,7 @@
     </target>
 
     <target name="build" description="build vaxter jars">
+        <mkdir dir="bin"/>
         <javac destdir="bin" srcdir="src">
             <classpath>
                 <fileset dir="lib" includes="*.jar"/>
