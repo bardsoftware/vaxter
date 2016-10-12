@@ -5,7 +5,7 @@
     </target>
 
     <target name="clean" description="Remove build directories">
-        <delete dir="lib"/>
+        <delete dir="bin"/>
     </target>
 
     <target name="clean-all" depends="clean" description="clean ivy cache">
@@ -14,7 +14,7 @@
 
     <target name="build" description="build vaxter jars">
         <mkdir dir="bin"/>
-        <javac destdir="bin" srcdir="src">
+        <javac destdir="bin" srcdir="src" debug="true">
             <classpath>
                 <fileset dir="lib" includes="*.jar"/>
             </classpath>
