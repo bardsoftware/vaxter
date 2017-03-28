@@ -4,7 +4,7 @@
       <conf name="binaries" description="binary jars"/>
     </configurations>
     <dependencies>
-        <dependency org="com.google.guava" name="guava" conf="binaries->default" rev="latest.release" transitive="false"/>
+        <dependency org="com.google.guava" name="guava" conf="binaries->default" rev="18.0" transitive="false"/>
         <dependency org="com.googlecode.objectify" name="objectify" conf="binaries->default" rev="4.0" transitive="false"/>
         <dependency org="com.google.appengine" name="appengine-api-1.0-sdk" conf="binaries->default" rev="latest.release" transitive="false"/>
         <dependency org="javax.servlet" name="javax.servlet-api" conf="binaries->default" rev="latest.release" transitive="false"/>
