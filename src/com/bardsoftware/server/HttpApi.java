@@ -1,5 +1,6 @@
 package com.bardsoftware.server;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 
 public interface HttpApi {
@@ -10,8 +11,11 @@ public interface HttpApi {
   String getPath();
   String getSessionId();
   boolean hasSession();
+
+  @Nullable
   String getUsername();
-  void setUsername(String value);
+
+  void setUsername(@Nullable String value);
   Object getSessionAttribute(String name);
   void setSessionAttribute(String name, Object object);
 

@@ -45,7 +45,7 @@ public class Google2Api extends DefaultApi20 {
 
   @Override
   public String getAuthorizationUrl(OAuthConfig config) {
-    Preconditions.checkValidUrl(config.getCallback(), "Valid url is required for a callback");
+    Preconditions.checkValidUrl(config.getCallback(), "Valid url is required for a callback. I got:" + config.getCallback());
     if (config.hasScope()) {
       return String.format(SCOPED_AUTHORIZE_URL, config.getApiKey(), OAuthEncoder.encode(config.getCallback()), OAuthEncoder.encode(config.getScope()));
     } else {

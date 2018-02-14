@@ -16,7 +16,6 @@ limitations under the License.
 package com.bardsoftware.server.auth.gae;
 
 import com.googlecode.objectify.annotation.Cache;
-import com.googlecode.objectify.annotation.Embed;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 
@@ -26,9 +25,7 @@ public class PrincipalEntity {
   @Id String id;
   public String displayName;
   ContactEntity contacts = new ContactEntity();
-  public Integer experiments;
 
-  @Embed
   public static class ContactEntity {
     public String email;
     public String emailVerificationToken;

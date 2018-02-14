@@ -15,16 +15,15 @@ limitations under the License.
 */
 package com.bardsoftware.server.auth.gae;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.logging.Logger;
-
 import com.bardsoftware.server.auth.Principal;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.logging.Logger;
 
 public class PrincipalGae implements Principal {
   private static final Logger LOGGER = Logger.getLogger(PrincipalGae.class.getName());
@@ -36,7 +35,7 @@ public class PrincipalGae implements Principal {
   public static void registerEntities() {
   }
 
-  
+
   public PrincipalGae(String id, String displayName) {
     myEntity = new PrincipalEntity(id, displayName);
   }
@@ -48,7 +47,7 @@ public class PrincipalGae implements Principal {
   public String getID() {
     return myEntity.id;
   }
-  
+
   public String getDisplayName() {
     return myEntity.displayName;
   }
@@ -57,10 +56,6 @@ public class PrincipalGae implements Principal {
       return getDisplayName();
   }
 
-  public void setExperiments(int experiments) {
-    myEntity.experiments = experiments; 
-  }
-      
   public com.googlecode.objectify.Key<PrincipalEntity> getKey() {
     return com.googlecode.objectify.Key.create(PrincipalEntity.class, myEntity.id);
   }
@@ -90,7 +85,7 @@ public class PrincipalGae implements Principal {
     PrincipalEntity entity = ofy.load().type(PrincipalEntity.class).filter("contacts.email =", email).first().now();
     return entity == null ? null : new PrincipalGae(entity);
   }
-  
+
   public static PrincipalGae find(com.googlecode.objectify.Key<PrincipalEntity> key) {
     Objectify ofy = ObjectifyService.ofy();
     PrincipalEntity entity = ofy.load().key(key).now();
