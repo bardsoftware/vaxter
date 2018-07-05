@@ -23,7 +23,6 @@ sourceSets {
     main {
         java {
             srcDirs = ["$projectDir/src"]
-            exclude "**/awsplay/*"
         }
     }
 }
@@ -38,6 +37,8 @@ dependencies {
     compile 'org.json:json:20180130'
 // https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305
     compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.2'
+    compile "com.typesafe.play:play-java_2.11:2.4.8"
+    compile "com.typesafe.play:play-cache_2.11:2.4.8"
 }
 
 publishing {
