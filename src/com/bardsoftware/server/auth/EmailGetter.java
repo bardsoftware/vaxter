@@ -53,8 +53,7 @@ public class EmailGetter extends AuthServlet {
         }
       }
       return null;
-    } catch (JSONException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException |
-        InvocationTargetException | NoSuchMethodException | SecurityException e) {
+    } catch (JSONException | ClassNotFoundException | IllegalArgumentException | SecurityException e) {
       LOGGER.log(Level.SEVERE, "", e);
       http.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       return null;

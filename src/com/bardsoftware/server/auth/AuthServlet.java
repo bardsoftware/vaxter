@@ -33,6 +33,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,7 +42,7 @@ import java.util.logging.Logger;
 public class AuthServlet {
   private static final Logger LOGGER = Logger.getLogger("AuthService");
   private static final Properties ourProperties = new Properties();
-  private final AppUrlService myUrlService;
+  protected final AppUrlService myUrlService;
   private final AuthService authService;
   private final Properties myProperties;
 
@@ -58,24 +59,6 @@ public class AuthServlet {
     myUrlService = urlService;
     authService = new AuthService(principalExtent, capabilities);
     myProperties = properties;
-  }
-
-  protected DefaultOAuthPlugin getOauthPlugin(String authProvider) {
-    return getOauthPlugin(authProvider, getProperties());
-  }
-
-  protected static DefaultOAuthPlugin getOauthPlugin(String authProvider, Properties props) {
-    try {
-      String keyIsEnabled = authProvider + ".enabled";
-      if (!Boolean.TRUE.equals(Boolean.parseBoolean(props.getProperty(keyIsEnabled, "false")))) {
-        return null;
-      }
-      String pluginClass = props.getProperty(authProvider + ".class.plugin", DefaultOAuthPlugin.class.getName());
-      return (DefaultOAuthPlugin) Class.forName(pluginClass).getConstructor(String.class, Properties.class).newInstance(authProvider, props);
-    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      LOGGER.log(Level.SEVERE, "Failed to create OAuth plugin", e);
-      return null;
-    }
   }
 
   public void doGet(HttpApi http) throws IOException {
@@ -153,8 +136,36 @@ public class AuthServlet {
     return doOauthWithCallback(http, plugin, myUrlService.getUrl("oauth.callback", http) + authProvider);
   }
 
+  private String doDevAuth(HttpApi http, DefaultOAuthPlugin plugin) throws IOException {
+    String id = http.getUrlParameter("id");
+    String name = http.getUrlParameter("name");
+    if (Strings.isNullOrEmpty(id) || Strings.isNullOrEmpty(name)) {
+      http.sendRedirect(myUrlService.buildUrlFromPath(plugin.getProperty(".redirect"), http));
+      return null;
+    }
+    return MessageFormat.format("'{'\"id\" : \"{0}\", \"name\" : \"{1}\"'}'", id, name);
+  }
+
+  protected DefaultOAuthPlugin getOauthPlugin(String authProvider) {
+    return getOauthPlugin(authProvider, getProperties());
+  }
+
+  protected static DefaultOAuthPlugin getOauthPlugin(String authProvider, Properties props) {
+    try {
+      String keyIsEnabled = authProvider + ".enabled";
+      if (!Boolean.TRUE.equals(Boolean.parseBoolean(props.getProperty(keyIsEnabled, "false")))) {
+        return null;
+      }
+      String pluginClass = props.getProperty(authProvider + ".class.plugin", DefaultOAuthPlugin.class.getName());
+      return (DefaultOAuthPlugin) Class.forName(pluginClass).getConstructor(String.class, Properties.class).newInstance(authProvider, props);
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      LOGGER.log(Level.SEVERE, "Failed to create OAuth plugin", e);
+      return null;
+    }
+  }
+
   protected String doOauthWithCallback(HttpApi http, DefaultOAuthPlugin plugin, String callback)
-      throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+      throws IOException, ClassNotFoundException, IllegalArgumentException, SecurityException {
     ServiceBuilder serviceBuilder = new ServiceBuilder()
         .provider(plugin.getBuilderApiClass())
         .apiKey(plugin.getKey())
@@ -164,7 +175,15 @@ public class AuthServlet {
       serviceBuilder.scope(plugin.getScope());
     }
     OAuthService service = serviceBuilder.build();
+    return doOauthWithCallbackAndTokenHandler(http, plugin, service, (token) -> {
+      OAuthRequest request = new OAuthRequest(Verb.GET, plugin.buildRequest(token.getRawResponse()));
+      service.signRequest(token, request);
+      return request.send().getBody();
+    });
+  }
 
+  protected <R> R doOauthWithCallbackAndTokenHandler(HttpApi http, DefaultOAuthPlugin plugin, OAuthService service, Function<Token, R> tokenHandler)
+      throws IOException, IllegalArgumentException, SecurityException {
     if (Strings.isNullOrEmpty(plugin.extractToken(http))) {
       // Obtain the Request Token
       if ("1.0".equals(service.getVersion())) {
@@ -188,23 +207,11 @@ public class AuthServlet {
     }
     try {
       Token accessToken = service.getAccessToken(requestToken, verifier);
-      OAuthRequest request = new OAuthRequest(Verb.GET, plugin.buildRequest(accessToken.getRawResponse()));
-      service.signRequest(accessToken, request);
-      return request.send().getBody();
+      return tokenHandler.apply(accessToken);
     } catch (OAuthException e) {
       http.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       return null;
     }
-  }
-
-  private String doDevAuth(HttpApi http, DefaultOAuthPlugin plugin) throws IOException {
-    String id = http.getUrlParameter("id");
-    String name = http.getUrlParameter("name");
-    if (Strings.isNullOrEmpty(id) || Strings.isNullOrEmpty(name)) {
-      http.sendRedirect(myUrlService.buildUrlFromPath(plugin.getProperty(".redirect"), http));
-      return null;
-    }
-    return MessageFormat.format("'{'\"id\" : \"{0}\", \"name\" : \"{1}\"'}'", id, name);
   }
 
   protected Properties getProperties() {
