@@ -30,11 +30,10 @@ public class GoogleDriveInfoGetter extends AuthServlet {
     super(principalExtent, capabilities, urlService, properties);
   }
 
-  // Basically we need access token and given name
   public JSONObject getGoogleDriveInfo(HttpApi http, String callback) throws IOException {
     try {
       Properties props = getProperties();
-      final String googleDriveScope = props.getProperty("google.drive.scope");
+      final String googleDriveScope = "https://www.googleapis.com/auth/drive";
       DefaultOAuthPlugin plugin = getOauthPlugin("google", props);
       if (plugin == null) {
         http.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -51,6 +50,8 @@ public class GoogleDriveInfoGetter extends AuthServlet {
 
       OAuthService service = serviceBuilder.build();
 
+      // We need to show that Google Drive was connected successfully, so after we got an access token,
+      // we are getting his given name and showing it somewhere, as well as persisting his token
       return doOauthWithCallbackAndTokenHandler(http, plugin, service, token -> {
         OAuthRequest givenNameRequest = new OAuthRequest(Verb.GET, plugin.buildRequest(token.getRawResponse()));
         service.signRequest(token, givenNameRequest);
