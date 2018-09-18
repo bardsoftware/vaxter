@@ -61,6 +61,24 @@ public class AuthServlet {
     myProperties = properties;
   }
 
+  protected DefaultOAuthPlugin getOauthPlugin(String authProvider) {
+    return getOauthPlugin(authProvider, getProperties());
+  }
+
+  protected static DefaultOAuthPlugin getOauthPlugin(String authProvider, Properties props) {
+    try {
+      String keyIsEnabled = authProvider + ".enabled";
+      if (!Boolean.TRUE.equals(Boolean.parseBoolean(props.getProperty(keyIsEnabled, "false")))) {
+        return null;
+      }
+      String pluginClass = props.getProperty(authProvider + ".class.plugin", DefaultOAuthPlugin.class.getName());
+      return (DefaultOAuthPlugin) Class.forName(pluginClass).getConstructor(String.class, Properties.class).newInstance(authProvider, props);
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+      LOGGER.log(Level.SEVERE, "Failed to create OAuth plugin", e);
+      return null;
+    }
+  }
+
   public void doGet(HttpApi http) throws IOException {
     String uri = http.getPath();
     String[] components = uri.split("/");
@@ -136,34 +154,6 @@ public class AuthServlet {
     return doOauthWithCallback(http, plugin, myUrlService.getUrl("oauth.callback", http) + authProvider);
   }
 
-  private String doDevAuth(HttpApi http, DefaultOAuthPlugin plugin) throws IOException {
-    String id = http.getUrlParameter("id");
-    String name = http.getUrlParameter("name");
-    if (Strings.isNullOrEmpty(id) || Strings.isNullOrEmpty(name)) {
-      http.sendRedirect(myUrlService.buildUrlFromPath(plugin.getProperty(".redirect"), http));
-      return null;
-    }
-    return MessageFormat.format("'{'\"id\" : \"{0}\", \"name\" : \"{1}\"'}'", id, name);
-  }
-
-  protected DefaultOAuthPlugin getOauthPlugin(String authProvider) {
-    return getOauthPlugin(authProvider, getProperties());
-  }
-
-  protected static DefaultOAuthPlugin getOauthPlugin(String authProvider, Properties props) {
-    try {
-      String keyIsEnabled = authProvider + ".enabled";
-      if (!Boolean.TRUE.equals(Boolean.parseBoolean(props.getProperty(keyIsEnabled, "false")))) {
-        return null;
-      }
-      String pluginClass = props.getProperty(authProvider + ".class.plugin", DefaultOAuthPlugin.class.getName());
-      return (DefaultOAuthPlugin) Class.forName(pluginClass).getConstructor(String.class, Properties.class).newInstance(authProvider, props);
-    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      LOGGER.log(Level.SEVERE, "Failed to create OAuth plugin", e);
-      return null;
-    }
-  }
-
   protected String doOauthWithCallback(HttpApi http, DefaultOAuthPlugin plugin, String callback)
       throws IOException, ClassNotFoundException, IllegalArgumentException, SecurityException {
     ServiceBuilder serviceBuilder = new ServiceBuilder()
@@ -212,6 +202,16 @@ public class AuthServlet {
       http.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       return null;
     }
+  }
+
+  private String doDevAuth(HttpApi http, DefaultOAuthPlugin plugin) throws IOException {
+    String id = http.getUrlParameter("id");
+    String name = http.getUrlParameter("name");
+    if (Strings.isNullOrEmpty(id) || Strings.isNullOrEmpty(name)) {
+      http.sendRedirect(myUrlService.buildUrlFromPath(plugin.getProperty(".redirect"), http));
+      return null;
+    }
+    return MessageFormat.format("'{'\"id\" : \"{0}\", \"name\" : \"{1}\"'}'", id, name);
   }
 
   protected Properties getProperties() {
