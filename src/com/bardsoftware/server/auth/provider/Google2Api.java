@@ -35,7 +35,7 @@ import org.scribe.utils.Preconditions;
  * @author dbarashev@bardsoftware.com
  */
 public class Google2Api extends DefaultApi20 {
-  private static final String AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/auth?client_id=%s&redirect_uri=%s&response_type=code";
+  private static final String AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&include_granted_scopes=true";
   private static final String SCOPED_AUTHORIZE_URL = String.format("%s&scope=%%s", AUTHORIZE_URL);
 
   @Override

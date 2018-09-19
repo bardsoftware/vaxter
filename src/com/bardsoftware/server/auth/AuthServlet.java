@@ -33,6 +33,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,7 +42,7 @@ import java.util.logging.Logger;
 public class AuthServlet {
   private static final Logger LOGGER = Logger.getLogger("AuthService");
   private static final Properties ourProperties = new Properties();
-  private final AppUrlService myUrlService;
+  protected final AppUrlService myUrlService;
   private final AuthService authService;
   private final Properties myProperties;
 
@@ -154,7 +155,7 @@ public class AuthServlet {
   }
 
   protected String doOauthWithCallback(HttpApi http, DefaultOAuthPlugin plugin, String callback)
-      throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+      throws IOException, ClassNotFoundException, IllegalArgumentException, SecurityException {
     ServiceBuilder serviceBuilder = new ServiceBuilder()
         .provider(plugin.getBuilderApiClass())
         .apiKey(plugin.getKey())
@@ -164,7 +165,15 @@ public class AuthServlet {
       serviceBuilder.scope(plugin.getScope());
     }
     OAuthService service = serviceBuilder.build();
+    return doOauthWithCallbackAndTokenHandler(http, plugin, service, (token) -> {
+      OAuthRequest request = new OAuthRequest(Verb.GET, plugin.buildRequest(token.getRawResponse()));
+      service.signRequest(token, request);
+      return request.send().getBody();
+    });
+  }
 
+  protected <R> R doOauthWithCallbackAndTokenHandler(HttpApi http, DefaultOAuthPlugin plugin, OAuthService service, Function<Token, R> tokenHandler)
+      throws IOException, IllegalArgumentException, SecurityException {
     if (Strings.isNullOrEmpty(plugin.extractToken(http))) {
       // Obtain the Request Token
       if ("1.0".equals(service.getVersion())) {
@@ -188,9 +197,7 @@ public class AuthServlet {
     }
     try {
       Token accessToken = service.getAccessToken(requestToken, verifier);
-      OAuthRequest request = new OAuthRequest(Verb.GET, plugin.buildRequest(accessToken.getRawResponse()));
-      service.signRequest(accessToken, request);
-      return request.send().getBody();
+      return tokenHandler.apply(accessToken);
     } catch (OAuthException e) {
       http.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
       return null;
