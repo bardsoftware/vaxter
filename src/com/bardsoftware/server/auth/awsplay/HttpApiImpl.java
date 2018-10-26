@@ -1,11 +1,9 @@
 package com.bardsoftware.server.auth.awsplay;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import com.bardsoftware.server.HttpApi;
+import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.Maps;
 import play.cache.Cache;
 import play.mvc.Http;
 import play.mvc.Http.Request;
@@ -14,10 +12,11 @@ import play.mvc.Http.Session;
 import play.mvc.Result;
 import play.mvc.Results;
 
-import com.bardsoftware.server.HttpApi;
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HttpApiImpl implements HttpApi {
   private static final Logger LOGGER = Logger.getLogger("HttpApiImpl");
@@ -36,7 +35,7 @@ public class HttpApiImpl implements HttpApi {
   }
   @Override
   public String getRequestUrl() {
-    String scheme = Objects.firstNonNull(myRequest.getHeader("X-Scheme"), "http");
+    String scheme = MoreObjects.firstNonNull(myRequest.getHeader("X-Scheme"), "http");
     return String.format("%s://%s%s", scheme, myRequest.host(), myRequest.uri());
   }
 
