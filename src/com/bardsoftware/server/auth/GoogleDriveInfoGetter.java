@@ -53,14 +53,23 @@ public class GoogleDriveInfoGetter extends AuthServlet {
       // We need to show that Google Drive was connected successfully, so after we got an access token,
       // we are getting his given name and showing it somewhere, as well as persisting his token
       return doOauthWithCallbackAndTokenHandler(http, plugin, service, token -> {
+        JSONObject tokenResponseJson = new JSONObject(token.getRawResponse());
         OAuthRequest givenNameRequest = new OAuthRequest(Verb.GET, plugin.buildRequest(token.getRawResponse()));
         service.signRequest(token, givenNameRequest);
         JSONObject response = new JSONObject(givenNameRequest.send().getBody());
         String givenName = plugin.createUserName(response);
 
-        return new JSONObject()
+        JSONObject result = new JSONObject()
             .put(getProperties().getProperty("google.json.access_token"), token.getToken())
             .put(getProperties().getProperty("google.json.first_name"), givenName);
+
+        String refreshTokenKey = getProperties().getProperty("google.json.refresh_token");
+        if (tokenResponseJson.has(refreshTokenKey)) {
+          result.put(refreshTokenKey, tokenResponseJson.getString(refreshTokenKey));
+        }
+
+        return result;
+
       });
     } catch (ClassNotFoundException e) {
       LOGGER.log(Level.SEVERE, "", e);
