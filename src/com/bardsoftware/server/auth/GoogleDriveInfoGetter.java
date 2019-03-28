@@ -33,7 +33,7 @@ public class GoogleDriveInfoGetter extends AuthServlet {
   public JSONObject getGoogleDriveInfo(HttpApi http, String callback) throws IOException {
     try {
       Properties props = getProperties();
-      final String googleDriveScope = "https://www.googleapis.com/auth/drive";
+      final String googleDriveScope = "https://www.googleapis.com/auth/drive.files";
       DefaultOAuthPlugin plugin = getOauthPlugin("google", props);
       if (plugin == null) {
         http.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
