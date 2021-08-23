@@ -4,7 +4,7 @@ import com.bardsoftware.server.HttpApi;
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
-import play.cache.Cache;
+import play.cache.SyncCacheApi;
 import play.mvc.Http;
 import play.mvc.Http.Request;
 import play.mvc.Http.Response;
@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 public class HttpApiImpl implements HttpApi {
   private static final Logger LOGGER = Logger.getLogger("HttpApiImpl");
   private static final String SESSION_ID_KEY = "JSESSIONID";
+  private static SyncCacheApi ourCache;
 
   private final Request myRequest;
   private final Response myResponse;
@@ -33,6 +34,11 @@ public class HttpApiImpl implements HttpApi {
     myResponse = resp;
     mySession = session;
   }
+
+  public static void setup(SyncCacheApi cacheApi) {
+    ourCache = cacheApi;
+  }
+
   @Override
   public String getRequestUrl() {
     String scheme = MoreObjects.firstNonNull(myRequest.getHeader("X-Scheme"), "http");
@@ -86,7 +92,7 @@ public class HttpApiImpl implements HttpApi {
       return null;
     }
     String attrKey = sessionId + "." + name;
-    Object attrVal = Cache.get(attrKey);
+    Object attrVal = ourCache.get(attrKey);
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.fine(String.format("getting attribute: got key=%s value=%s", attrKey, attrVal));
     }
@@ -104,7 +110,7 @@ public class HttpApiImpl implements HttpApi {
     if (LOGGER.isLoggable(Level.FINE)) {
       LOGGER.fine(String.format("setting attribute: key=%s value=%s", attrKey, object));
     }
-    Cache.set(attrKey, object);
+    ourCache.set(attrKey, object);
   }
 
   @Override
